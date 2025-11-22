@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=compile
-#SBATCH --output=logs/out_%A_%a.log
+#SBATCH --output=logs/out_compile.log
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=32G
 
