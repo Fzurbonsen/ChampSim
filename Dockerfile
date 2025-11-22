@@ -2,8 +2,8 @@
 FROM ubuntu:22.04
 
 # For SAFARI cluster
-# ENV http_proxy="http://proxy.ethz.ch:3128"
-# ENV https_proxy="http://proxy.ethz.ch:3128"
+ENV http_proxy="http://proxy.ethz.ch:3128"
+ENV https_proxy="http://proxy.ethz.ch:3128"
 
 # Install build tools and libraries
 RUN apt-get update && apt-get install -y \
@@ -54,3 +54,7 @@ COPY ./vcpkg.json /ChampSim/vcpkg.json
 # Install vcpkg
 RUN vcpkg/bootstrap-vcpkg.sh
 RUN vcpkg/vcpkg install
+
+# prepare final working directory
+RUN mkdir /bench
+WORKDIR ./bench
