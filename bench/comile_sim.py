@@ -99,7 +99,7 @@ def main():
 
     config = read_input_parameters(args.file)
     build_config_sim(config)
-    run_sim(config)
+    compile_sim(config)
     return 0
 
 
