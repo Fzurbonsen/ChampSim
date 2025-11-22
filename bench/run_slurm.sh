@@ -7,6 +7,8 @@
 PWD_DIR=$(pwd)
 IMAGE=champsim:latest
 CHAMPSIM=$PWD_DIR/../
+BENCH=$CHAMPSIM/bench
+TRACES=$CHAMPSIM/traces
 
 module load python/3.12
 
@@ -15,6 +17,7 @@ CONFIG=params/config_${SLURM_ARRAY_TASK_ID}.json
 podman load -i $CHAMPSIM/champsim_latest.tar
 
 podman run --rm \
-    -v $CHAMPSIM:/ChampSim \
+    -v $BENCH:/ChampSim/bench \
+    -v $TRACES:/ChampSim/traces \
     $IMAGE \
     /bin/bash -c "cd bench && python3 run_sim.py --file $CONFIG"
