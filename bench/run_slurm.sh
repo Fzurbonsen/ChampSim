@@ -2,6 +2,7 @@
 #SBATCH --job-name=sim
 #SBATCH --array=0-13
 #SBATCH --output=logs/out_%A_%a.log
+#SBATCH --mem=8G
 
 PWD_DIR=$(pwd)
 IMAGE=champsim:latest
