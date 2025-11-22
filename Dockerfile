@@ -37,7 +37,6 @@ COPY ./branch/ /ChampSim/branch/
 COPY ./btb/ /ChampSim/btb/
 COPY ./config/ /ChampSim/config/
 COPY ./docs/ /ChampSim/docs/
-COPY ./dpc4/ /ChampSim/dpc4/
 COPY ./prefetcher/  /ChampSim/prefetcher/
 COPY ./replacement/ /ChampSim/replacement/
 COPY ./test/ /ChampSim/test/
