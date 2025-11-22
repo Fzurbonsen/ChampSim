@@ -51,7 +51,7 @@ def compile_sim(config):
     parent_dir = "../"
     config_file = f"dpc4/1C.fullBW.{prefetcher}pref.json"
     subprocess.run(["./config.sh", config_file], check=True, cwd=parent_dir)
-    subprocess.run(["make", "-j"], check=True, cwd=parent_dir)
+    subprocess.run(["make", "-j4"], check=True, cwd=parent_dir)
     return
 
 
