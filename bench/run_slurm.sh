@@ -13,6 +13,13 @@ TRACES=$CHAMPSIM/traces
 BIN=$CHAMPSIM/bin
 DPC4=$CHAMPSIM/dpc4
 
+echo $PWD_DIR
+echo $CHAMPSIM
+echo $BENCH
+echo $TRACES
+echo $BIN
+echo $DPC4
+
 module load python/3.12
 
 CONFIG=params/config_${SLURM_ARRAY_TASK_ID}.json
