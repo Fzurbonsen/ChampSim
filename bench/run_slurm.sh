@@ -16,4 +16,4 @@ podman load -i $CHAMPSIM/champsim_latest.tar
 podman run --rm \
     -v $CHAMPSIM:/ChampSim \
     $IMAGE \
-    python3 run_sim.py --file $CONFIG
+    /bin/bash -c "cd bench && python3 run_sim.py --file $CONFIG"
