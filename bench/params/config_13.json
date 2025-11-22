@@ -1,0 +1,11 @@
+{
+    "files": {
+        "trace": "GAP/bfs-14.trace.gz",
+        "out": "out/out13.log"
+    },
+    "simulation": {
+        "prefetcher": "no",
+        "warmup-instructions": 10000000,
+        "simulation-instructions": 50000000
+    }
+}

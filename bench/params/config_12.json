@@ -1,0 +1,11 @@
+{
+    "files": {
+        "trace": "charlie/charlie_0004.champsim.gz",
+        "out": "out/out12.log"
+    },
+    "simulation": {
+        "prefetcher": "no",
+        "warmup-instructions": 10000000,
+        "simulation-instructions": 50000000
+    }
+}
