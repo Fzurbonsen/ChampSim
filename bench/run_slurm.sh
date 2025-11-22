@@ -5,6 +5,6 @@
 
 module load python/3.12
 
-CONFIG=params/config${SLURM_ARRAY_TASK_ID}.json
+CONFIG=params/config_${SLURM_ARRAY_TASK_ID}.json
 
 python3 run_sim.py --file $CONFIG
