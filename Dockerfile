@@ -55,6 +55,6 @@ COPY ./vcpkg.json /ChampSim/vcpkg.json
 RUN vcpkg/bootstrap-vcpkg.sh
 RUN vcpkg/vcpkg install
 
-# prepare final working directory
-RUN mkdir /bench
-WORKDIR ./bench
+# # prepare final working directory
+# RUN mkdir /bench
+# WORKDIR ./bench
