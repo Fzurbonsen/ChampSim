@@ -5,6 +5,8 @@
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=32G
 
+hostname
+
 cd ..
 CHAMPSIM=$(pwd)
 cd bench
