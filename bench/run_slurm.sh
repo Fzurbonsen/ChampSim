@@ -5,15 +5,16 @@
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=32G
 
-PWD_DIR=$(pwd)
+cd ..
+CHAMPSIM=$(pwd)
+cd bench
+
 IMAGE=champsim:latest
-CHAMPSIM=$PWD_DIR/../
 BENCH=$CHAMPSIM/bench
 TRACES=$CHAMPSIM/traces
 BIN=$CHAMPSIM/bin
 DPC4=$CHAMPSIM/dpc4
 
-echo $PWD_DIR
 echo $CHAMPSIM
 echo $BENCH
 echo $TRACES
