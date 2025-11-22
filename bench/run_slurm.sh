@@ -11,6 +11,8 @@ module load python/3.12
 
 CONFIG=params/config_${SLURM_ARRAY_TASK_ID}.json
 
+podman load -i $CHAMPSIM/champsim_latest.tar
+
 podman run --rm \
     -v $CHAMPSIM:/ChampSim \
     $IMAGE \
