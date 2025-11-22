@@ -34,3 +34,5 @@ compile_commands.json
 traces/
 .venv/
 champsim_latest.tar
+bench/logs/*
+bench/out/*
