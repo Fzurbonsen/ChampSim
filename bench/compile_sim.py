@@ -68,16 +68,20 @@ def main():
 
     config = read_input_parameters(args.file)
 
+    trace = config["files"]["trace"]
+    output = config["files"]["out"]
+    prefetcher = config["simulation"]["prefetcher"]
+    warmup = config["simulation"]["warmup-instructions"]
+    sim = config["simulation"]["simulation-instructions"]
     print("config:")
     print("\tfiles:")
-    print(f"\t\ttrace: {config["files"]["trace"]}")
-    print(f"\t\toutput: {config["files"]["out"]}")
+    print(f"\t\ttrace: {trace}")
+    print(f"\t\toutput: {output}")
     print()
     print("\tsimulation:")
-    print(f"\t\tprefetcher: {config["simulation"]["prefetcher"]}")
-    print(f"\t\twarmup-instructions: {config["simulation"]["warmup-instructions"]}")
-    print(f"\t\tsimulation-instructions: {config["simulation"]["simulation-instructions"]}")
-    print("---building compile config---")
+    print(f"\t\tprefetcher: {prefetcher}")
+    print(f"\t\twarmup-instructions: {warmup}")
+    print(f"\t\tsimulation-instructions: {sim}")
 
     build_config_sim(config)
 
