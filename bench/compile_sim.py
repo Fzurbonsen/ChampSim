@@ -64,9 +64,28 @@ def main():
 
     args = parser.parse_args()
 
+    print("---reading input arguments---")
+
     config = read_input_parameters(args.file)
+
+    print("config:")
+    print("\tfiles:")
+    print(f"\t\ttrace: {config["files"]["trace"]}")
+    print(f"\t\toutput: {config["files"]["out"]}")
+    print()
+    print("\tsimulation:")
+    print(f"\t\tprefetcher: {config["simulation"]["prefetcher"]}")
+    print(f"\t\twarmup-instructions: {config["simulation"]["warmup-instructions"]}")
+    print(f"\t\tsimulation-instructions: {config["simulation"]["simulation-instructions"]}")
+    print("---building compile config---")
+
     build_config_sim(config)
+
+    print("---compiling---")
+
     compile_sim(config)
+
+    print("---finished compiling---")
     return 0
 
 
