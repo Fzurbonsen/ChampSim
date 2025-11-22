@@ -2,7 +2,7 @@
 #SBATCH --job-name=sim
 #SBATCH --array=0-13
 #SBATCH --output=logs/out_%A_%a.log
-#SBATCH --cpus-per-task=4
+#SBATCH --cpus-per-task=8
 #SBATCH --mem=32G
 
 PWD_DIR=$(pwd)
