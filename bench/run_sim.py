@@ -28,8 +28,9 @@ def run_sim(config):
     warmup = f"--warmup-instructions={warmup_instr}"
     simulation = f"--simulation-instructions={sim_instr}"
     trace_path = f"traces/{trace}"
+    heartbeat = f"--hide-hearbeat"
     result = subprocess.run(
-        [binary, warmup, simulation, trace_path],
+        [binary, warmup, simulation, heartbeat, trace_path],
         cwd=parent_dir,
         capture_output=True,
         text=True
