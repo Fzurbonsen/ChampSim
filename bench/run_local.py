@@ -229,6 +229,9 @@ def main():
         # print("---STDERR---")
         # print(f"{r['stderr']}")
         print(f"{r['stats']}")
+    
+    write_to_csv(results)
+    return
 
 
 if __name__ == "__main__":
