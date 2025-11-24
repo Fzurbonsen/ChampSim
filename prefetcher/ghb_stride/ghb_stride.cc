@@ -41,10 +41,17 @@ int ghb_stride::check_ghb_pointer(uint16_t ptr, uint16_t tag) {
     return 0;
 
   // check if the pointer is inside of the valid range
-  if (((ghb_head - ptr) & GHB_PTR_MAX_VALUE) > GHB_MAX_ADDR)
+  uint32_t distance = (ghb_head -ptr) & GHB_PTR_MAX_VALUE;
+  if (distance == 0)
     return 0;
 
-  ghb_entry_t& ghb_entry = ghb[ptr & GHB_MAX_ADDR];
+  if (distance >= GHB_SIZE)
+    return 0;
+  // if (((ghb_head - ptr) & GHB_PTR_MAX_VALUE) > GHB_MAX_ADDR)
+  //   return 0;
+
+  // ghb_entry_t& ghb_entry = ghb[ptr & GHB_MAX_ADDR];
+  ghb_entry_t& ghb_entry = ghb[ptr & GHB_PTR_MAX_VALUE];
   // check if we have an outdated entry
   if (ptr != ghb_entry.head)
     return 0;
@@ -120,6 +127,7 @@ uint16_t ghb_stride::prefetch_history(it_entry_t& it_entry,
     if (prefetch_block_addr < 0)
       return ghb_ptr;
 
+    // prefetch the cache line
     uint64_t prefetch_addr = static_cast<uint64_t>(prefetch_block_addr) << LOG2_BLOCK_SIZE;
     prefetch_line(champsim::address{prefetch_addr}, true, 0);
   }
@@ -130,7 +138,7 @@ uint16_t ghb_stride::prefetch_history(it_entry_t& it_entry,
 uint32_t ghb_stride::prefetcher_cache_operate(champsim::address addr, champsim::address ip, uint8_t cache_hit, bool useful_prefetch, access_type type,
                                       uint32_t metadata_in)
 {
-  uint64_t gm_addr = addr.to<uint64_t>();
+  uint64_t gm_addr = addr.to<uint64_t>() >> LOG2_BLOCK_SIZE;
   uint16_t it_index = static_cast<uint16_t>(ip.to<uint64_t>() & IT_MAX_ADDR); // the lower 8 bits of the ip are the position in the index table
   uint16_t tag = static_cast<uint16_t>((ip.to<uint64_t>() >> IT_SIZE_LOG2) & IT_TAG_MAX_VALUE); // the next higher 8 bits make up our tag
 
@@ -141,17 +149,18 @@ uint32_t ghb_stride::prefetcher_cache_operate(champsim::address addr, champsim::
   uint16_t ghb_ptr = prefetch_history(it_entry, tag, gm_addr);
 
   // write new entries
-  ghb_entry_t& ghb_entry = ghb[ghb_head & GHB_MAX_ADDR];
+  ghb_entry_t& ghb_entry = ghb[ghb_head & GHB_MAX_ADDR]; // GHB_MAX_ADDR
   ghb_entry.ghb_link = ghb_ptr;
   ghb_entry.head = ghb_head;
   ghb_entry.gm_addr = gm_addr;
   ghb_entry.tag = tag;
 
-  it_entry.ghb_ptr = ghb_head & GHB_MAX_ADDR;
+  it_entry.ghb_ptr = ghb_head; // GHB_MAX_ADDR
   it_entry.tag = tag;
   it_entry.valid = 1;
 
-  ghb_head = (ghb_head + 1) & GHB_MAX_ADDR;
+  // ghb_head = (ghb_head + 1) & GHB_MAX_ADDR;
+  ghb_head = (ghb_head + 1) & GHB_PTR_MAX_VALUE;
 
   return metadata_in;
 }
