@@ -36,6 +36,7 @@ sim_instr = int(5e4) # should be 5e7
 config_core = "1C"
 config_bandwidth = "fullBW"
 config_prefetcher = "ghb_stride"
+# config_prefetcher = "no"
 
 # global ui state
 ui_state = {}
