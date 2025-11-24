@@ -1,5 +1,5 @@
 #
-# run_local.py
+# run_sim.py
 # Script to run the bench locally
 # Author: Frederic zur Bonsen
 # E-Mail: fzurbonsen@ethz.ch
