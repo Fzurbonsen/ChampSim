@@ -20,4 +20,4 @@ podman run --rm \
     -v $BIN:/ChampSim/bin \
     -v $DPC4:/ChampSim/dpc4 \
     $IMAGE \
-    python3 run_sim.py
+    /bin/bash -c "cd bench && python3 run_sim.py"
