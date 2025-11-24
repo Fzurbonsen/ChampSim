@@ -7,6 +7,7 @@
 
 
 #include "ghb_stride.h"
+#include <iostream>
 
 
 // Initialize the prefetcher structures
@@ -68,10 +69,12 @@ uint16_t ghb_stride::prefetch_history(it_entry_t& it_entry,
   // check if the tag matches the entry
   if (tag != it_entry.tag)
     return GHB_NULL_PTR;
+    
 
   // check if the entry points to a valid address/tag pair in the GHB
   if (!check_ghb_pointer(ghb_ptr, tag))
     return GHB_NULL_PTR;
+
 
   // init history as zero
   ghb_entry_t history[GHB_DEPTH];
@@ -144,7 +147,7 @@ uint32_t ghb_stride::prefetcher_cache_operate(champsim::address addr, champsim::
   ghb_entry.gm_addr = gm_addr;
   ghb_entry.tag = tag;
 
-  it_entry.ghb_ptr = ghb_ptr;
+  it_entry.ghb_ptr = ghb_head & GHB_MAX_ADDR;
   it_entry.tag = tag;
   it_entry.valid = 1;
 

@@ -39,7 +39,7 @@
 #define IT_TAG_MAX_VALUE (IT_TAG_SIZE - 1)
 
 // define a nullptr for the GHB
-#define GHB_NULL_PTR INT16_MAX // this value can never be reached as the maximum allowed value for any GHB-pointer is 255
+#define GHB_NULL_PTR UINT16_MAX // this value can never be reached as the maximum allowed value for any GHB-pointer is 255
 
 
 // global-history-buffer entry struct
