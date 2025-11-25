@@ -18,8 +18,8 @@
 
 // define system parameters
 #define GHB_DEPTH 2
-#define GHB_L 4
-#define GHB_N 6
+#define GHB_L 4 // prefetch length, the length of the memory we prefetch
+#define GHB_N 6 // maximum distance, i.e. how many instances do we prefetch
 
 // define the size of the global-history-buffer
 #define GHB_SIZE_LOG2 8 // 8
@@ -44,17 +44,17 @@
 
 // global-history-buffer entry struct
 typedef struct {
-	uint64_t gm_addr; // global-miss-address
+	uint64_t gm_addr; // global-miss-address (this is a block/line address)
 	uint16_t ghb_link; // link to previous ghb_entry
 	uint16_t tag; // index table tag
-	uint16_t head;
+	uint16_t head; // ghb_pointer that holds the head at the time off adding the entry
 } ghb_entry_t;
 
 // index table entry struct
 typedef struct {
-	uint16_t ghb_ptr;
-	uint16_t tag;
-	bool valid;
+	uint16_t ghb_ptr; // pointer to the GHB entry
+	uint16_t tag; // tag optained from the PC
+	bool valid; // valid bit for the entry (this is only relevant until the IT table is full)
 } it_entry_t;
 
 
@@ -65,22 +65,27 @@ public:
 	using prefetcher::prefetcher;
 
 	void prefetcher_initialize();
+
 	// void prefetcher_branch_operate(champsim::address ip,
 	// 																	uint8_t branch_type,
 	// 																	champsim::address branch_target);
+
 	uint32_t prefetcher_cache_operate(champsim::address addr,
 																		champsim::address ip,
 																		uint8_t cache_hit,
 																		bool useful_prefetch,
 																		access_type type,
 																		uint32_t metadata_in);
+
 	// uint32_t prefetcher_cache_fill(champsim::address addr,
 	// 																long set,
 	// 																long way,
 	// 																uint8_t prefetch,
 	// 																champsim::address evicted_addr,
 	// 																uint32_t metadata_in);
+
 	// void prefetcher_cycle_operate();
+
 	// void prefetcher_final_stats();
 	
 private:
@@ -89,13 +94,13 @@ private:
 	it_entry_t it[IT_SIZE];
 	uint16_t ghb_head;
 
-	// helper functions to handle the GHB
+	// helper method to handle the GHB
 	void print_ghb();
 	void print_it();
 	int check_ghb_pointer(uint16_t ptr, uint16_t tag);
 	uint16_t sanitize_pointer(uint16_t ptr, uint16_t tag);
 
-	// function to handle prefetching
+	// mehtod to handle prefetching
 	uint16_t prefetch_history(it_entry_t& it_entry,
 														uint16_t tag,
 														uint64_t gm_addr);

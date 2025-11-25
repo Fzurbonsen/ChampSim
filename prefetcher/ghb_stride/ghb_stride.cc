@@ -190,13 +190,13 @@ uint32_t ghb_stride::prefetcher_cache_operate(champsim::address addr,
   uint16_t ghb_ptr = prefetch_history(it_entry, tag, gm_addr);
 
   // write new entries
-  ghb_entry_t& ghb_entry = ghb[ghb_head & GHB_MAX_ADDR]; // GHB_MAX_ADDR
+  ghb_entry_t& ghb_entry = ghb[ghb_head & GHB_MAX_ADDR];
   ghb_entry.ghb_link = ghb_ptr;
   ghb_entry.head = ghb_head;
   ghb_entry.gm_addr = gm_addr;
   ghb_entry.tag = tag;
 
-  it_entry.ghb_ptr = ghb_head; // GHB_MAX_ADDR
+  it_entry.ghb_ptr = ghb_head;
   it_entry.tag = tag;
   it_entry.valid = 1;
 
