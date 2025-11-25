@@ -8,6 +8,30 @@
 
 #include "ghb_stride.h"
 #include <iostream>
+#include <iomanip>
+
+
+// debug helpers
+void ghb_stride::print_ghb() {
+  std::cerr << "GHB:" << std::endl;
+  std::cerr << "GHB_HEAD: " << (ghb_head & GHB_MAX_ADDR) << " | " << ghb_head << std::endl; 
+  for (int i = 0; i < GHB_SIZE; ++i) {
+    std::cerr 
+        << "0x" << std::hex << std::setw(8) << std::setfill('0') << ghb[i].gm_addr 
+        << std::dec << " | "
+        << ghb[i].tag << " | " 
+        << ghb[i].ghb_link << " | " 
+        << ghb[i].head 
+        << std::endl;
+  }
+}
+
+void ghb_stride::print_it() {
+  std::cerr << "IT:" << std::endl;
+  for (int i = 0; i < IT_SIZE; ++i) {
+    std::cerr << it[i].ghb_ptr << " | " << it[i].tag << " | " << it[i].valid << std::endl;
+  }
+}
 
 
 // Initialize the prefetcher structures
@@ -41,17 +65,14 @@ int ghb_stride::check_ghb_pointer(uint16_t ptr, uint16_t tag) {
     return 0;
 
   // check if the pointer is inside of the valid range
-  uint32_t distance = (ghb_head -ptr) & GHB_PTR_MAX_VALUE;
-  if (distance == 0)
+  // std::cerr << "Distance calcualtion:" << std::endl;
+  // std::cerr << ghb_head << " - " << ptr << " = " << (ghb_head - ptr) << std::endl;
+  // std::cerr << "(ghb_head - ptr) & GHB_PTR_MAX_VALUE) = " << ((ghb_head - ptr) & GHB_PTR_MAX_VALUE) << std::endl;
+  // std::cerr << ((ghb_head - ptr) & GHB_PTR_MAX_VALUE) << " > " << GHB_MAX_ADDR << std::endl;
+  if (((ghb_head - ptr) & GHB_PTR_MAX_VALUE) > GHB_MAX_ADDR)
     return 0;
 
-  if (distance >= GHB_SIZE)
-    return 0;
-  // if (((ghb_head - ptr) & GHB_PTR_MAX_VALUE) > GHB_MAX_ADDR)
-  //   return 0;
-
-  // ghb_entry_t& ghb_entry = ghb[ptr & GHB_MAX_ADDR];
-  ghb_entry_t& ghb_entry = ghb[ptr & GHB_PTR_MAX_VALUE];
+  ghb_entry_t& ghb_entry = ghb[ptr & GHB_MAX_ADDR];
   // check if we have an outdated entry
   if (ptr != ghb_entry.head)
     return 0;
@@ -63,6 +84,13 @@ int ghb_stride::check_ghb_pointer(uint16_t ptr, uint16_t tag) {
 }
 
 
+// method to sanitize the pointer
+uint16_t ghb_stride::sanitize_pointer(uint16_t ptr, uint16_t tag) {
+  return check_ghb_pointer(ptr, tag) ? ptr : GHB_NULL_PTR;
+}
+
+
+// method to try to prefetch the history
 uint16_t ghb_stride::prefetch_history(it_entry_t& it_entry,
                                       uint16_t tag,
                                       uint64_t gm_addr) {
@@ -77,11 +105,9 @@ uint16_t ghb_stride::prefetch_history(it_entry_t& it_entry,
   if (tag != it_entry.tag)
     return GHB_NULL_PTR;
     
-
   // check if the entry points to a valid address/tag pair in the GHB
   if (!check_ghb_pointer(ghb_ptr, tag))
     return GHB_NULL_PTR;
-
 
   // init history as zero
   ghb_entry_t history[GHB_DEPTH];
@@ -98,7 +124,7 @@ uint16_t ghb_stride::prefetch_history(it_entry_t& it_entry,
   while ((history_length < GHB_DEPTH) && check_ghb_pointer(history_ptr, tag)) {
     ghb_entry_t& ghb_entry = ghb[history_ptr & GHB_MAX_ADDR];
     history[history_length++] = ghb_entry;
-    history_ptr = ghb_entry.ghb_link;
+    history_ptr = sanitize_pointer(ghb_entry.ghb_link, tag);
   }
 
   // check the history size
@@ -119,6 +145,12 @@ uint16_t ghb_stride::prefetch_history(it_entry_t& it_entry,
   if (stride1 != stride2)
     return ghb_ptr;
 
+  // std::cerr << "Prefetching:" << std::endl;
+  // std::cerr << "History:" << std::endl;
+  // std::cerr << (ghb_head & GHB_MAX_ADDR) << " | " << ghb_head << std::endl;
+  // std::cerr << (ghb_ptr & GHB_MAX_ADDR) << " | " << ghb_ptr << std::endl;
+  // std::cerr << (history[0].ghb_link & GHB_MAX_ADDR) << " | " << history[0].ghb_link << std::endl;
+
   // loop over strides to prefetch
   for (int i = 0; i < GHB_N+1; ++i) {
     int64_t prefetch_block_addr = static_cast<int64_t>(gm_addr) + stride1 * static_cast<int64_t>(GHB_L + i);
@@ -131,6 +163,7 @@ uint16_t ghb_stride::prefetch_history(it_entry_t& it_entry,
     uint64_t prefetch_addr = static_cast<uint64_t>(prefetch_block_addr) << LOG2_BLOCK_SIZE;
     prefetch_line(champsim::address{prefetch_addr}, true, 0);
   }
+  // std::cerr << "Prefetch successful" << std::endl;
   return ghb_ptr;
 }
 
@@ -158,6 +191,9 @@ uint32_t ghb_stride::prefetcher_cache_operate(champsim::address addr, champsim::
   it_entry.ghb_ptr = ghb_head; // GHB_MAX_ADDR
   it_entry.tag = tag;
   it_entry.valid = 1;
+
+  // print_ghb();
+  // print_it();
 
   // ghb_head = (ghb_head + 1) & GHB_MAX_ADDR;
   ghb_head = (ghb_head + 1) & GHB_PTR_MAX_VALUE;

@@ -36,3 +36,5 @@ traces/
 champsim_latest.tar
 bench/logs/*
 bench/out/*
+
+*.log
