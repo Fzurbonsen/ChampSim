@@ -12,7 +12,8 @@
 
 
 // debug helpers
-void ghb_stride::print_ghb() {
+void ghb_stride::print_ghb()
+{
   std::cerr << "GHB:" << std::endl;
   std::cerr << "GHB_HEAD: " << (ghb_head & GHB_MAX_ADDR) << " | " << ghb_head << std::endl; 
   for (int i = 0; i < GHB_SIZE; ++i) {
@@ -26,7 +27,8 @@ void ghb_stride::print_ghb() {
   }
 }
 
-void ghb_stride::print_it() {
+void ghb_stride::print_it()
+{
   std::cerr << "IT:" << std::endl;
   for (int i = 0; i < IT_SIZE; ++i) {
     std::cerr << it[i].ghb_ptr << " | " << it[i].tag << " | " << it[i].valid << std::endl;
@@ -35,8 +37,8 @@ void ghb_stride::print_it() {
 
 
 // Initialize the prefetcher structures
-void ghb_stride::prefetcher_initialize() {
-  
+void ghb_stride::prefetcher_initialize()
+{  
   // set the head pointer in the GHB to zero
   ghb_head = 0;
 
@@ -58,8 +60,8 @@ void ghb_stride::prefetcher_initialize() {
 
 
 // method to check whether a pointer/tag pair is valid
-int ghb_stride::check_ghb_pointer(uint16_t ptr, uint16_t tag) {
-
+int ghb_stride::check_ghb_pointer(uint16_t ptr, uint16_t tag)
+{
   // check if the pointer is initzialized
   if (ptr == GHB_NULL_PTR)
     return 0;
@@ -85,7 +87,8 @@ int ghb_stride::check_ghb_pointer(uint16_t ptr, uint16_t tag) {
 
 
 // method to sanitize the pointer
-uint16_t ghb_stride::sanitize_pointer(uint16_t ptr, uint16_t tag) {
+uint16_t ghb_stride::sanitize_pointer(uint16_t ptr, uint16_t tag)
+{
   return check_ghb_pointer(ptr, tag) ? ptr : GHB_NULL_PTR;
 }
 
@@ -93,8 +96,8 @@ uint16_t ghb_stride::sanitize_pointer(uint16_t ptr, uint16_t tag) {
 // method to try to prefetch the history
 uint16_t ghb_stride::prefetch_history(it_entry_t& it_entry,
                                       uint16_t tag,
-                                      uint64_t gm_addr) {
-
+                                      uint64_t gm_addr)
+{
   const uint16_t ghb_ptr = it_entry.ghb_ptr;
 
   // check if the entry is valid
@@ -168,8 +171,13 @@ uint16_t ghb_stride::prefetch_history(it_entry_t& it_entry,
 }
 
 
-uint32_t ghb_stride::prefetcher_cache_operate(champsim::address addr, champsim::address ip, uint8_t cache_hit, bool useful_prefetch, access_type type,
-                                      uint32_t metadata_in)
+// method to operate our prefetcher whenever a cache access happens
+uint32_t ghb_stride::prefetcher_cache_operate(champsim::address addr,
+                                              champsim::address ip,
+                                              uint8_t cache_hit,
+                                              bool useful_prefetch,
+                                              access_type type,
+                                              uint32_t metadata_in)
 {
   uint64_t gm_addr = addr.to<uint64_t>() >> LOG2_BLOCK_SIZE;
   uint16_t it_index = static_cast<uint16_t>(ip.to<uint64_t>() & IT_MAX_ADDR); // the lower 8 bits of the ip are the position in the index table
