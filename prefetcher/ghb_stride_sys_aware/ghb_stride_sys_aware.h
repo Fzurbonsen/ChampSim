@@ -7,20 +7,33 @@
 */
 
 
-#ifndef PREFETCHER_GHB_STRIDE_H
-#define PREFETCHER_GHB_STRIDE_H
+#ifndef PREFETCHER_GHB_STRIDE_SYS_AWARE_H
+#define PREFETCHER_GHB_STRIDE_SYS_AWARE_H
 
 #include <cstdint>
 
 #include "champsim.h"
 #include "address.h"
 #include "modules.h"
+#include "cache.h"
+#include "dpc_api.h"
 
 
 // define system parameters
 #define GHB_DEPTH 2
 #define GHB_L 4 // prefetch length, the length of the memory we prefetch
-#define GHB_N 6 // maximum distance, i.e. how many instances do we prefetch
+#define GHB_N_MAX 6 // maximum distance (degree), i.e. how many instances do we prefetch at most
+#define GHB_N_MIN 1 // minimum distance (degree), i.e. how many instances do we prefetch at least
+#define GHB_N_START GHB_N_MAX // start value for the prefetch distance (degree)
+#define GHB_EPOCH_LENGTH 1000 // length of a sampling epoch
+
+// system aware decision tree config
+#define GHB_ACCURACY_UPPER_THRESHOLD 0.9
+#define GHB_ACCURACY_LOWER_THRESHOLD 0.5
+#define GHB_MEMORY_BW_USAGE_UPPER_THRESHOLD 12
+#define GHB_MEMORY_BW_USAGE_LOWER_THRESHOLD 4
+#define GHB_N_VOLATILITY 1
+
 
 // define the size of the global-history-buffer
 #define GHB_SIZE_LOG2 8 // 8
@@ -29,7 +42,6 @@
 #define GHB_PTR_BITS (GHB_SIZE_LOG2 + 4) // Paper: We have found that increasing the width of the pointers by four-bits (the number of bits used in our simulations) makes the probability of incorrect matches very low.
 #define GHB_PTR_SIZE (1 << GHB_PTR_BITS)
 #define GHB_PTR_MAX_VALUE (GHB_PTR_SIZE - 1)
-
 
 // define the size of the index table
 #define IT_SIZE_LOG2 8 // 8
@@ -60,7 +72,7 @@ typedef struct {
 
 
 // ghb_stride class
-class ghb_stride : public champsim::modules::prefetcher
+class ghb_stride_sys_aware : public champsim::modules::prefetcher
 {
 public:
 	using prefetcher::prefetcher;
@@ -85,7 +97,7 @@ public:
 	// 																champsim::address evicted_addr,
 	// 																uint32_t metadata_in);
 
-	// void prefetcher_cycle_operate();
+	void prefetcher_cycle_operate();
 
 	// void prefetcher_final_stats();
 	
@@ -95,7 +107,14 @@ private:
 	it_entry_t it[IT_SIZE];
 	uint16_t ghb_head;
 
-	// helper method to handle the GHB
+	// system awareness
+	uint16_t epoch_counter; // should never exeed 1000 therefore unit16 is enough
+	int16_t prefetch_distance; // to avoid roll over errors we use int16
+	uint64_t prefetch_issued_total; // tracker to calculate prefetches issued per epoch
+	uint64_t prefetch_useful_total; // tracker to calcualte prefetches useful per epoch
+
+
+	// helper methods to handle the GHB
 	void print_ghb();
 	void print_it();
 	int check_ghb_pointer(uint16_t ptr, uint16_t tag);
@@ -105,7 +124,9 @@ private:
 	uint16_t prefetch_history(it_entry_t& it_entry,
 														uint16_t tag,
 														uint64_t gm_addr);
-
+	// method to calculate the prefetch distance (degree)
+	int16_t calculate_prefetch_distance(float accuracy,
+																			uint8_t memory_bw_usage);
 };
 
-#endif // PREFETCHER_GHB_STRIDE_H
+#endif // PREFETCHER_GHB_STRIDE_SYS_AWARE_H

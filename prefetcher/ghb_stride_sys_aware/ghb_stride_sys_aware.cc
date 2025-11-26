@@ -7,13 +7,13 @@
 */
 
 
-#include "ghb_stride.h"
+#include "ghb_stride_sys_aware.h"
 #include <iostream>
 #include <iomanip>
 
 
 // debug helpers
-void ghb_stride::print_ghb()
+void ghb_stride_sys_aware::print_ghb()
 {
   std::cerr << "GHB:" << std::endl;
   std::cerr << "GHB_HEAD: " << (ghb_head & GHB_MAX_ADDR) << " | " << ghb_head << std::endl; 
@@ -28,7 +28,7 @@ void ghb_stride::print_ghb()
   }
 }
 
-void ghb_stride::print_it()
+void ghb_stride_sys_aware::print_it()
 {
   std::cerr << "IT:" << std::endl;
   for (int i = 0; i < IT_SIZE; ++i) {
@@ -38,7 +38,7 @@ void ghb_stride::print_it()
 
 
 // Initialize the prefetcher structures
-void ghb_stride::prefetcher_initialize()
+void ghb_stride_sys_aware::prefetcher_initialize()
 {  
   // set the head pointer in the GHB to zero
   ghb_head = 0;
@@ -57,11 +57,17 @@ void ghb_stride::prefetcher_initialize()
     entry.tag = 0;
     entry.valid = false;
   }
+
+  // system awarness parameters
+  epoch_counter = 0;
+  prefetch_distance = GHB_N_START;
+  prefetch_issued_total = 0;
+  prefetch_useful_total = 0;
 }
 
 
 // method to check whether a pointer/tag pair is valid
-int ghb_stride::check_ghb_pointer(uint16_t ptr, uint16_t tag)
+int ghb_stride_sys_aware::check_ghb_pointer(uint16_t ptr, uint16_t tag)
 {
   // check if the pointer is initzialized
   if (ptr == GHB_NULL_PTR)
@@ -88,14 +94,14 @@ int ghb_stride::check_ghb_pointer(uint16_t ptr, uint16_t tag)
 
 
 // method to sanitize the pointer
-uint16_t ghb_stride::sanitize_pointer(uint16_t ptr, uint16_t tag)
+uint16_t ghb_stride_sys_aware::sanitize_pointer(uint16_t ptr, uint16_t tag)
 {
   return check_ghb_pointer(ptr, tag) ? ptr : GHB_NULL_PTR;
 }
 
 
 // method to try to prefetch the history
-uint16_t ghb_stride::prefetch_history(it_entry_t& it_entry,
+uint16_t ghb_stride_sys_aware::prefetch_history(it_entry_t& it_entry,
                                       uint16_t tag,
                                       uint64_t gm_addr)
 {
@@ -156,7 +162,7 @@ uint16_t ghb_stride::prefetch_history(it_entry_t& it_entry,
   // std::cerr << (history[0].ghb_link & GHB_MAX_ADDR) << " | " << history[0].ghb_link << std::endl;
 
   // loop over strides to prefetch
-  for (int i = 0; i < GHB_N+1; ++i) {
+  for (int i = 0; i < prefetch_distance+1; ++i) {
     int64_t prefetch_block_addr = static_cast<int64_t>(gm_addr) + stride1 * static_cast<int64_t>(GHB_L + i);
 
     // physical addresses have to positive
@@ -173,7 +179,7 @@ uint16_t ghb_stride::prefetch_history(it_entry_t& it_entry,
 
 
 // method to operate our prefetcher whenever a cache access happens
-uint32_t ghb_stride::prefetcher_cache_operate(champsim::address addr,
+uint32_t ghb_stride_sys_aware::prefetcher_cache_operate(champsim::address addr,
                                               champsim::address ip,
                                               uint8_t cache_hit,
                                               bool useful_prefetch,
@@ -208,4 +214,68 @@ uint32_t ghb_stride::prefetcher_cache_operate(champsim::address addr,
   ghb_head = (ghb_head + 1) & GHB_PTR_MAX_VALUE;
 
   return metadata_in;
+}
+
+
+// method to calculate the prefetch distance
+int16_t ghb_stride_sys_aware::calculate_prefetch_distance(float accuracy, uint8_t memory_bw_usage)
+{
+  if (memory_bw_usage >= GHB_MEMORY_BW_USAGE_UPPER_THRESHOLD) {
+    if (accuracy >= GHB_ACCURACY_UPPER_THRESHOLD) 
+      return prefetch_distance;
+    if (accuracy >= GHB_ACCURACY_LOWER_THRESHOLD)
+      return prefetch_distance - 1*GHB_N_VOLATILITY;
+    return prefetch_distance - 2*GHB_N_VOLATILITY;
+  }
+
+  if (memory_bw_usage >= GHB_MEMORY_BW_USAGE_LOWER_THRESHOLD) {
+    if (accuracy >= GHB_ACCURACY_UPPER_THRESHOLD) 
+      return prefetch_distance + 1*GHB_N_VOLATILITY;
+    if (accuracy >= GHB_ACCURACY_LOWER_THRESHOLD)
+      return prefetch_distance;
+    return prefetch_distance - 1*GHB_N_VOLATILITY;
+  }
+
+  if (accuracy >= GHB_ACCURACY_UPPER_THRESHOLD) 
+    return prefetch_distance + 2*GHB_N_VOLATILITY;
+  if (accuracy >= GHB_ACCURACY_LOWER_THRESHOLD)
+    return prefetch_distance + 1*GHB_N_VOLATILITY;
+  return prefetch_distance;
+}
+
+
+// method to perform prefetcher operations every cycle
+void ghb_stride_sys_aware::prefetcher_cycle_operate()
+{
+  epoch_counter++; // increase the epoch counter every cycle
+
+  // check if an epoch has passed
+  if (epoch_counter < GHB_EPOCH_LENGTH)
+    return;
+  // reset epoch
+  epoch_counter = 0;
+
+  // fetch new prefetch stats
+  int64_t prefetch_issued = intern_->sim_stats.pf_issued;
+  int64_t prefetch_useful = intern_->sim_stats.pf_useful;
+
+  // calculate prefetch stats for the last epoch
+  int64_t prefetch_issued_epoch = prefetch_issued - prefetch_issued_total;
+  int64_t prefetch_useful_epoch = prefetch_useful - prefetch_useful_total;
+
+  // update prefetch trackers
+  prefetch_issued_total = prefetch_issued;
+  prefetch_useful_total = prefetch_useful;
+
+  float prefetch_accuracy = (float)prefetch_useful_epoch / (float)prefetch_issued_epoch;
+  uint8_t memory_bw_usage = get_dram_bw();
+
+  // calculate the prefetch distance
+  prefetch_distance = calculate_prefetch_distance(prefetch_accuracy, memory_bw_usage);
+  
+  // check the prefetch distance bounds
+  if (prefetch_distance < GHB_N_MIN)
+    prefetch_distance = GHB_N_MIN;
+  if (prefetch_distance > GHB_N_MAX)
+    prefetch_distance = GHB_N_MAX;
 }
