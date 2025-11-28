@@ -35,7 +35,7 @@ warmup_instr = int(1e7) # should be 1e7
 sim_instr = int(5e7) # should be 5e7
 config_core = "1C"
 # config_bandwidth = "fullBW"
-config_bandwidth = "fullBW"
+config_bandwidth = "limitBW"
 config_prefetcher = "delta_correlation"
 # config_prefetcher = "no"
 
