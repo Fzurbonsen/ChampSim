@@ -1,14 +1,14 @@
 /*
- * ghb_stride_sys_aware.h
- * Header file to hold the definitions of the globalhistory-buffer-based stride prefetcher
- * with system awareness.
+ * delta_correlation.h
+ * Header file to hold the definitions of the globalhistory-buffer-based delta
+ * correlation prefetcher with system awareness.
  * Author: Frederic zur Bonsen
  * E-Mail: <fzurbonsen@ethz.ch>
 */
 
 
-#ifndef PREFETCHER_GHB_STRIDE_SYS_AWARE_H
-#define PREFETCHER_GHB_STRIDE_SYS_AWARE_H
+#ifndef PREFETCHER_DELTA_CORRELATION_H
+#define PREFETCHER_DELTA_CORRELATION_H
 
 #include <cstdint>
 
@@ -72,7 +72,7 @@ typedef struct {
 
 
 // ghb_stride class
-class ghb_stride_sys_aware : public champsim::modules::prefetcher
+class delta_correlation : public champsim::modules::prefetcher
 {
 public:
 	using prefetcher::prefetcher;
@@ -129,4 +129,4 @@ private:
 																			uint8_t memory_bw_usage);
 };
 
-#endif // PREFETCHER_GHB_STRIDE_SYS_AWARE_H
+#endif // PREFETCHER_DELTA_CORRELATION_H
