@@ -74,6 +74,7 @@ typedef struct {
 	int64_t delta;
 	int64_t next_deltas[DCT_NUM_CANDIDATES];
 	uint8_t counters[DCT_NUM_CANDIDATES];
+	bool sorted;
 } dct_entry_t;
 
 // index table entry struct
@@ -124,6 +125,7 @@ private:
 	// system awareness
 	uint16_t epoch_counter; // should never exeed 1000 therefore unit16 is enough
 	int16_t prefetch_distance; // to avoid roll over errors we use int16
+	int16_t n_predictions;
 	uint64_t prefetch_issued_total; // tracker to calculate prefetches issued per epoch
 	uint64_t prefetch_useful_total; // tracker to calcualte prefetches useful per epoch
 
@@ -132,10 +134,15 @@ private:
 	void print_ghb();
 	void print_it();
 	int check_dct(int64_t delta, dct_entry_t& dct_entry, bool update);
-	int64_t predict_delta(dct_entry_t& dct_entry);
+	void predict_delta(dct_entry_t& dct_entry);
 	int check_ghb_pointer(uint16_t ptr, uint16_t tag);
 	uint16_t sanitize_pointer(uint16_t ptr, uint16_t tag);
 
+	int8_t prefetch_delta(dct_entry_t& dct_entry,
+												int64_t& block_addr,
+												int64_t& prev_delta,
+												uint16_t index,
+												bool update);
 	// mehtod to handle prefetching
 	uint16_t prefetch_history(it_entry_t& it_entry,
 														uint16_t tag,
