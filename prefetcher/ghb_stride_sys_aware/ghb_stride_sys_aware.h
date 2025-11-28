@@ -22,9 +22,9 @@
 // define system parameters
 #define GHB_DEPTH 2
 #define GHB_L 4 // prefetch length, the length of the memory we prefetch
-#define GHB_N_MAX 6 // maximum distance (degree), i.e. how many instances do we prefetch at most
+#define GHB_N_MAX 10 // maximum distance (degree), i.e. how many instances do we prefetch at most
 #define GHB_N_MIN 1 // minimum distance (degree), i.e. how many instances do we prefetch at least
-#define GHB_N_START GHB_N_MAX // start value for the prefetch distance (degree)
+#define GHB_N_START 6 // start value for the prefetch distance (degree)
 #define GHB_EPOCH_LENGTH 1000 // length of a sampling epoch
 
 // system aware decision tree config
@@ -32,7 +32,7 @@
 #define GHB_ACCURACY_LOWER_THRESHOLD 0.5
 #define GHB_MEMORY_BW_USAGE_UPPER_THRESHOLD 12
 #define GHB_MEMORY_BW_USAGE_LOWER_THRESHOLD 4
-#define GHB_N_VOLATILITY 1
+#define GHB_N_VOLATILITY 2
 
 
 // define the size of the global-history-buffer

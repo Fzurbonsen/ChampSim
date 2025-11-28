@@ -30,7 +30,7 @@ traces = [
 ]
 out_path = "out/" # this is not relative to the host_path but relative to the script location
 csv_path = "csv/" # this is not relative to the host_path but relative to the script location
-csv_file = "task3_ghb_stride_sys_aware_fullBW.csv"
+csv_file = "task4_ghb_stride_sys_aware_fullBW_volatile_2_Nmax_10_Nstart_6.csv"
 warmup_instr = int(1e7) # should be 1e7
 sim_instr = int(5e7) # should be 5e7
 config_core = "1C"
