@@ -143,7 +143,7 @@ def run_sim(trace, bin_file):
     ]
 
     # run simulation
-    print(f"Running: {' '.join(args)}")
+    print(f"Running: {' '.join(args)}", flush=True)
     # with print_lock:
     #     ui_state[trace] = "Running"
     #     ui_print()
@@ -156,7 +156,7 @@ def run_sim(trace, bin_file):
         timeout=90 * 60
     )
 
-    print(f"Terminated: {' '.join(args)}")
+    print(f"Terminated: {' '.join(args)}", flush=True)
     # with print_lock:
     #     ui_state[trace] = "Terminated"
     #     ui_print()
