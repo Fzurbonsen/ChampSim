@@ -51,6 +51,17 @@ void delta_correlation::prefetcher_initialize()
     entry.tag = 0;
   }
 
+  // zero the DCT
+  for (dct_entry_t& entry : dct) {
+    entry.delta = 0;
+    for (int64_t& next_delta : entry.next_deltas) {
+      next_delta = 0;
+    }
+    for (uint8_t& counter : entry.counters) {
+      counter = 0;
+    }
+  }
+
   // zero the IT
   for (it_entry_t& entry : it) {
     entry.ghb_ptr = GHB_NULL_PTR;
@@ -63,6 +74,45 @@ void delta_correlation::prefetcher_initialize()
   prefetch_distance = GHB_N_START;
   prefetch_issued_total = 0;
   prefetch_useful_total = 0;
+}
+
+
+// method to check if a delta already exists
+int delta_correlation::check_dct(int64_t delta, dct_entry_t& dct_entry, bool update)
+{  
+  uint16_t min_counter_idx = 0;
+
+  // iterate over all candidates to check if the delta is alreay there
+  for (uint16_t i = 0; i < DCT_NUM_CANDIDATES; ++i) {
+    if (delta == dct_entry.next_deltas[i]) {
+      if (update)
+        dct_entry.counters[i] = dct_entry.counters[i] < 255 ? dct_entry.counters[i] + 1 : dct_entry.counters[i];
+      return 1;
+    }
+    min_counter_idx = dct_entry.counters[i] <= dct_entry.counters[min_counter_idx] ? i : min_counter_idx;
+  }
+
+  // evict the candidate with the lowest counter
+  if (update) {
+    dct_entry.counters[min_counter_idx] = 1;
+    dct_entry.next_deltas[min_counter_idx] = delta;
+  }
+  return 0;
+}
+
+
+// method to find the most likely delta
+int64_t delta_correlation::predict_delta(dct_entry_t& dct_entry)
+{
+  uint16_t max_counter_idx = 0;
+
+  // find the delta with the highest count
+  for (uint16_t i = 0; i < DCT_NUM_CANDIDATES; ++i) {
+    max_counter_idx = dct_entry.counters[i] > dct_entry.counters[max_counter_idx] ? i : max_counter_idx;
+  }
+
+  // return the most common delta
+  return dct_entry.next_deltas[max_counter_idx];
 }
 
 
@@ -102,8 +152,8 @@ uint16_t delta_correlation::sanitize_pointer(uint16_t ptr, uint16_t tag)
 
 // method to try to prefetch the history
 uint16_t delta_correlation::prefetch_history(it_entry_t& it_entry,
-                                      uint16_t tag,
-                                      uint64_t gm_addr)
+                                              uint16_t tag,
+                                              uint64_t gm_addr)
 {
   const uint16_t ghb_ptr = it_entry.ghb_ptr;
 
@@ -141,39 +191,44 @@ uint16_t delta_correlation::prefetch_history(it_entry_t& it_entry,
   if (history_length < 2)
     return ghb_ptr;
 
-  // int64_t as we can have both positive and negative strides
-  int64_t stride1, stride2; // we only care about the first two strides due to the choice of GHB_DEPTH = 2 
-                            // which gives us a history of lenght 3 with the current entry
-  stride1 = static_cast<int64_t>(gm_addr) - static_cast<int64_t>(history[0].gm_addr);
-  stride2 = static_cast<int64_t>(history[0].gm_addr) - static_cast<int64_t>(history[1].gm_addr);
+  // calculate the delta
+  int64_t delta1 = static_cast<int64_t>(gm_addr) - static_cast<int64_t>(history[0].gm_addr);
+  int64_t delta2 = static_cast<int64_t>(history[0].gm_addr) - static_cast<int64_t>(history[1].gm_addr);
 
-  // check that the first stride is nonzero, i.e. that we have different addresses
-  if (stride1 == 0)
+  // check that the first delta is non-zero
+  if (delta1 == 0)
     return ghb_ptr;
 
-  // check whether the strides are identical
-  if (stride1 != stride2)
+  // generate the dct entry
+  dct_entry_t& dct_entry = dct[(delta2 + DCT_SIZE/2) & DCT_MAX_ADDR];
+
+  // check if the delta is in the DCT
+  if (!check_dct(delta1, dct_entry, true))
     return ghb_ptr;
 
-  // std::cerr << "Prefetching:" << std::endl;
-  // std::cerr << "History:" << std::endl;
-  // std::cerr << (ghb_head & GHB_MAX_ADDR) << " | " << ghb_head << std::endl;
-  // std::cerr << (ghb_ptr & GHB_MAX_ADDR) << " | " << ghb_ptr << std::endl;
-  // std::cerr << (history[0].ghb_link & GHB_MAX_ADDR) << " | " << history[0].ghb_link << std::endl;
+  int64_t prev_delta = delta1;
+  int64_t prefetch_block_addr = gm_addr;
+  
+  // loop to prefetch multiple deltas
+  for (int16_t i = 0; i < prefetch_distance+1; ++i) {
+    // calculate the most likely next delta
+    int64_t predicted_delta = predict_delta(dct_entry);
+    prefetch_block_addr += predicted_delta;
 
-  // loop over strides to prefetch
-  for (int i = 0; i < prefetch_distance+1; ++i) {
-    int64_t prefetch_block_addr = static_cast<int64_t>(gm_addr) + stride1 * static_cast<int64_t>(GHB_L + i);
-
-    // physical addresses have to positive
+    // physical addresses have to be positive
     if (prefetch_block_addr < 0)
       return ghb_ptr;
 
     // prefetch the cache line
     uint64_t prefetch_addr = static_cast<uint64_t>(prefetch_block_addr) << LOG2_BLOCK_SIZE;
     prefetch_line(champsim::address{prefetch_addr}, true, 0);
+
+    // update dct_entry
+    dct_entry = dct[(prev_delta + DCT_SIZE/2) & DCT_MAX_ADDR];
+    if (!check_dct(predicted_delta, dct_entry, false))
+      return ghb_ptr;
+    prev_delta = predicted_delta;
   }
-  // std::cerr << "Prefetch successful" << std::endl;
   return ghb_ptr;
 }
 

@@ -43,6 +43,12 @@
 #define GHB_PTR_SIZE (1 << GHB_PTR_BITS)
 #define GHB_PTR_MAX_VALUE (GHB_PTR_SIZE - 1)
 
+// define the size of the delta correlation table
+#define DCT_SIZE_LOG2 8 // 8
+#define DCT_SIZE (1 << DCT_SIZE_LOG2)
+#define DCT_MAX_ADDR (DCT_SIZE - 1)
+#define DCT_NUM_CANDIDATES 4
+
 // define the size of the index table
 #define IT_SIZE_LOG2 8 // 8
 #define IT_SIZE (1 << IT_SIZE_LOG2)
@@ -62,6 +68,13 @@ typedef struct {
 	uint16_t tag; // index table tag
 	uint16_t head; // ghb_pointer that holds the head at the time off adding the entry
 } ghb_entry_t;
+
+// delta correlation table entry struct
+typedef struct {
+	int64_t delta;
+	int64_t next_deltas[DCT_NUM_CANDIDATES];
+	uint8_t counters[DCT_NUM_CANDIDATES];
+} dct_entry_t;
 
 // index table entry struct
 typedef struct {
@@ -105,6 +118,7 @@ private:
 	// define GHB and IT
 	ghb_entry_t ghb[GHB_SIZE];
 	it_entry_t it[IT_SIZE];
+	dct_entry_t dct[DCT_SIZE];
 	uint16_t ghb_head;
 
 	// system awareness
@@ -117,6 +131,8 @@ private:
 	// helper methods to handle the GHB
 	void print_ghb();
 	void print_it();
+	int check_dct(int64_t delta, dct_entry_t& dct_entry, bool update);
+	int64_t predict_delta(dct_entry_t& dct_entry);
 	int check_ghb_pointer(uint16_t ptr, uint16_t tag);
 	uint16_t sanitize_pointer(uint16_t ptr, uint16_t tag);
 
