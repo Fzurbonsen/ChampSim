@@ -1,0 +1,15 @@
+trace,IPC,instructions,cycles
+GAP/bc-0.trace.gz,0.143,50000001,349684898
+GAP/bc-12.trace.gz,0.1366,50000001,365990824
+GAP/bfs-10.trace.gz,0.4612,50000006,108404376
+GAP/bfs-14.trace.gz,0.3295,50000006,151752027
+GAP/cc-13.trace.gz,0.3422,50000000,146131646
+GAP/cc-14.trace.gz,0.3861,50000002,129511255
+GAP/cc-5.trace.gz,0.4161,50000000,120170149
+GAP/sssp-10.trace.gz,0.4134,50000006,120960969
+GAP/sssp-14.trace.gz,0.4218,50000002,118526788
+charlie/charlie_0000.champsim.gz,0.824,50000006,60682894
+charlie/charlie_0001.champsim.gz,0.9174,50000003,54501742
+charlie/charlie_0002.champsim.gz,0.552,50000005,90576767
+charlie/charlie_0003.champsim.gz,0.7404,50000000,67532185
+charlie/charlie_0004.champsim.gz,0.6424,50000002,77832395
