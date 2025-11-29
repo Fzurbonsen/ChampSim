@@ -110,7 +110,7 @@ typedef struct {
 ```
 The prefetcher walks the IT and GHB in the same fassion as in the GHB-stride prefetcher. The prefetcher also computes the last two strides, I refer to them as `delta1` and `delta2` here to avoid confusion, by taking the difference of past cache block addresses. The prefetcher probes the DCT entry of `delta2` with `delta1`. If the entry is already aware of `delta1` then the prefetcher increases the respective counter. If not then the position with the lowest counter is evicted and replaced with `delta1`.
 
-Next the prefetcher tries to predict the future memory access. For this he starts form the known `delta1` and probes its DCT entry for the most likely follow-up delta. It prefetches the cache block address at `current_address + delta`. It then proceeds from the predicted delta and tries to predict further by probing the DCT entry at the location of the predicted delta. The prefetcher repeats this for the same prefetch degree as the stride prefetcher.
+Next the prefetcher tries to predict the future memory access. For this he starts form the known `delta1` and probes its DCT entry for the most likely follow-up delta. It prefetches the cache block address at `current_address + delta`. It then proceeds from the predicted delta and tries to predict further by probing the DCT entry at the location of the predicted delta. The prefetcher repeats this for the same prefetch degree as the stride prefetcher. Allowing it to be system-aware with the same logic.
 
 ### Results
 

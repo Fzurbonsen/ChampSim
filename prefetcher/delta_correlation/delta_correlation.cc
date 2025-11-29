@@ -202,15 +202,15 @@ uint16_t delta_correlation::prefetch_history(it_entry_t& it_entry,
   // generate the dct entry
   dct_entry_t& dct_entry = dct[(delta2 + DCT_SIZE/2) & DCT_MAX_ADDR];
 
-  // add delta to the last dct entry
-  check_dct(delta1, dct_entry, true);
+  // // add delta to the last dct entry
+  // check_dct(delta1, dct_entry, true);
 
-  // // check if the delta is in the DCT
-  // if (!check_dct(delta1, dct_entry, true))
-  //   return ghb_ptr;
+  // check if the delta is in the DCT
+  if (!check_dct(delta1, dct_entry, true))
+    return ghb_ptr;
 
-  dct_entry = dct[(delta1 + DCT_SIZE/2) & DCT_MAX_ADDR];
-  // int64_t prev_delta = delta1;
+  // dct_entry = dct[(delta1 + DCT_SIZE/2) & DCT_MAX_ADDR];
+  int64_t prev_delta = delta1;
   int64_t prefetch_block_addr = gm_addr;
   
   // loop to prefetch multiple deltas
@@ -228,11 +228,11 @@ uint16_t delta_correlation::prefetch_history(it_entry_t& it_entry,
     prefetch_line(champsim::address{prefetch_addr}, true, 0);
 
     // update dct_entry
-    // dct_entry = dct[(prev_delta + DCT_SIZE/2) & DCT_MAX_ADDR];
+    dct_entry = dct[(prev_delta + DCT_SIZE/2) & DCT_MAX_ADDR];
     if (!check_dct(predicted_delta, dct_entry, false))
       return ghb_ptr;
-    dct_entry = dct[(predicted_delta + DCT_SIZE/2) & DCT_MAX_ADDR];
-    // prev_delta = predicted_delta;
+    // dct_entry = dct[(predicted_delta + DCT_SIZE/2) & DCT_MAX_ADDR];
+    prev_delta = predicted_delta;
   }
   return ghb_ptr;
 }
