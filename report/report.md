@@ -36,7 +36,7 @@ For this first implementation many values were hardcoded to show the advantage o
 ### Results
 In Figure 2 we see the relative speedup for the implemented GHB-stride prefetcher relative to the baseline evaluated in the Warmup step of the lab. Charlie_2 and charlie_3 show the smallest speedup with 1.01 but in general it can be observed that the traces from the charlie dataset show barely any performance difference. On the other hand we see very clear improvements for the traces in the GAP dataset. The speedup is seen in bfs-14 which is the trace with the worst baseline ICU. Observe also, that no traces shows a speedup below 1. So adding a prefetcher in this system configuration shows a strict performance increase.
 
-![Figure 2](img/task1_ghb_stride_pref_fullBW_to_no_pref_fullBW_speedup.png)
+![Figure 2](img/task1_ghb_stride_fullBW_speedup.png)
 
 [^1]: Kyle J. Nesbit and James E. Smith. Data cache prefetching using a global history buffer. In HPCA, 2004
 
@@ -45,7 +45,7 @@ In Figure 2 we see the relative speedup for the implemented GHB-stride prefetche
 In the second task we are asked to evalueate the GHB-stride prefetcher in a system with limited memory bandwidth.
 In Figure 3 we can see the speedup of the GHB-stride prefetcher relative to the baseline without a prefetcher both run in a system with a limited memory bandwidth. We can make a few important observations. (1) We can directly see that the geometric mean of the speedup has decreased indicating that the GHB-stride prefetcher does not only perform worse in absolute numbers with a limited bandwidth but also its relative performance to the baseline decreases. The biggest performance difference can be seen in the traces sssp-10 and ssp-14, with -0.11 and -0.09 respectively. The smallest performance loss can be observed with charlie_1 and charlie_2 which show a difference of -0.01. In general the traces from the charlie dataset show a smaller performance loss than those from the GAP dataset. But in for the trace charlie_3 we see a speedup of 0.99, meaning that it runs slower with the prefetcher than without.
 
-![Figure 3](img/task2_ghb_stride_pref_limitBW_to_no_pref_limitBW_speedup.png)
+![Figure 3](img/task2_ghb_stride_limitBW_speedup.png)
 
 ### Discussion
 In the data we see a performance loss in every trace. This stems from the implementation of the prefetcher. The prefetcher is not aware of the system and therefore does not know how much memory bandwidth is still free. In the implementation we hardcoded the prefetch degree meaning that the prefetcher will always prefetch the next 6 memory addresses. If the memory bus is close to or already at capacity this becomes an issue as it in the best case slows down the prefetching and in the worst case slows down the entire CPU as other memory that is needed cannot be fetched due to the bus being clogged by prefetcher requests.
@@ -86,11 +86,11 @@ int16_t ghb_stride_sys_aware::calculate_prefetch_distance(float accuracy, uint8_
 ### Results
 Figure 4 shows the speedup of the system-aware GHB-stride prefetcher with full bandwidth relative to the system with no prefetcher at full bandwidth. If we compare this with Figure 2 from Task 1 we see no difference in performance. This makes sense as we initialized our system-aware prefetcher at the hardcoded values for the not system-aware prefetcher. If the prefetcher is never limited by the memory bandwidth then he will perform the same as the non system-aware prefetcher.
 
-![Figure 4](img/task3_ghb_stride_sys_aware_fullBW_to_no_pref_fullBW_speedup.png)
+![Figure 4](img/task3_ghb_stride_sys_aware_fullBW_speedup.png)
 
 Figure 5 shows the speedup of the system aware GHBS-stride prefetcher with limited bandwidth relative to the system with no prefetcher at limited bandwidth. We see that the geometric mean is higher for the system-aware prefetcher. We see higher or equal speedup for all traces except for bfs-10 and bfs-14 where the speedup reduces by 0.03 and 0.1 respectively.
 
-![Figure 5](img/task3_ghb_stride_sys_aware_limitBW_to_no_pref_limitBW_speedup.png)
+![Figure 5](img/task3_ghb_stride_sys_aware_limitBW_speedup.png)
 
 ### Discussion
 From the non-limited bandwidth analysis we gain that the system-aware prefetcher can perform at the same level as the non-system-aware prefetcher. This is an important sanity check to confirm that the system awareness can provide the same optimal performance under optimal conditions. From analysing the limited bandwidth data we understand that the system awareness comes at a cost. We clearly see that for some specific traces we loose a lot of performance due to the system-awareness.
