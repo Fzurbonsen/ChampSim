@@ -72,8 +72,8 @@ typedef struct {
 // delta correlation table entry struct
 typedef struct {
 	int64_t delta;
-	int64_t next_deltas[DCT_NUM_CANDIDATES];
-	uint8_t counters[DCT_NUM_CANDIDATES];
+	int64_t next_deltas[DCT_NUM_CANDIDATES]; // array of possible following deltas
+	uint8_t counters[DCT_NUM_CANDIDATES]; // occurence of following deltas
 } dct_entry_t;
 
 // index table entry struct

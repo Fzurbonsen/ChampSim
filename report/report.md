@@ -51,8 +51,65 @@ In Figure 3 we can see the speedup of the GHB-stride prefetcher relative to the 
 In the data we see a performance loss in every trace. This stems from the implementation of the prefetcher. The prefetcher is not aware of the system and therefore does not know how much memory bandwidth is still free. In the implementation we hardcoded the prefetch degree meaning that the prefetcher will always prefetch the next 6 memory addresses. If the memory bus is close to or already at capacity this becomes an issue as it in the best case slows down the prefetching and in the worst case slows down the entire CPU as other memory that is needed cannot be fetched due to the bus being clogged by prefetcher requests.
 
 ## Task 3
+In the third task we were asked to extend our prefetcher with system awareness. The system awareness is based on a hueristic scheme to increase or decrease the prefetch degree based on the available memory bandwidth and the accuracy of the prefetcher.
 
+### Implementation
+The system awareness is represented by the `prefetch_distance` variable in the code. This variable is equivalent to the prefetch dgree from the task description. To allow for online changing of this parameter a cycle counter is implemented. Once an epoch has passed (1000 cycles) the performance of the last epoch is evaluated by requesing the memory bandwidth usage and calculating the prefetch efficiency. With this information the prefetcher can then adapt the prefetch degree.
+```
+// method to calculate the prefetch distance
+int16_t ghb_stride_sys_aware::calculate_prefetch_distance(float accuracy, uint8_t memory_bw_usage)
+{
+  if (memory_bw_usage >= GHB_MEMORY_BW_USAGE_UPPER_THRESHOLD) {
+    if (accuracy >= GHB_ACCURACY_UPPER_THRESHOLD) 
+      return prefetch_distance;
+    if (accuracy >= GHB_ACCURACY_LOWER_THRESHOLD)
+      return prefetch_distance - 1;
+    return prefetch_distance - 2;
+  }
+
+  if (memory_bw_usage >= GHB_MEMORY_BW_USAGE_LOWER_THRESHOLD) {
+    if (accuracy >= GHB_ACCURACY_UPPER_THRESHOLD) 
+      return prefetch_distance + 1;
+    if (accuracy >= GHB_ACCURACY_LOWER_THRESHOLD)
+      return prefetch_distance;
+    return prefetch_distance - 1;
+  }
+
+  if (accuracy >= GHB_ACCURACY_UPPER_THRESHOLD) 
+    return prefetch_distance + 2;
+  if (accuracy >= GHB_ACCURACY_LOWER_THRESHOLD)
+    return prefetch_distance + 1;
+  return prefetch_distance;
+}
+```
+
+### Results
+Figure 4 shows the speedup of the system-aware GHB-stride prefetcher with full bandwidth relative to the system with no prefetcher at full bandwidth. If we compare this with Figure 2 from Task 1 we see no difference in performance. This makes sense as we initialized our system-aware prefetcher at the hardcoded values for the not system-aware prefetcher. If the prefetcher is never limited by the memory bandwidth then he will perform the same as the non system-aware prefetcher.
+
+![Figure 4](img/task3_ghb_stride_sys_aware_fullBW_to_no_pref_fullBW_speedup.png)
+
+Figure 5 shows the speedup of the system aware GHBS-stride prefetcher with limited bandwidth relative to the system with no prefetcher at limited bandwidth. We see that the geometric mean is higher for the system-aware prefetcher. We see higher or equal speedup for all traces except for bfs-10 and bfs-14 where the speedup reduces by 0.03 and 0.1 respectively.
+
+![Figure 5](img/task3_ghb_stride_sys_aware_limitBW_to_no_pref_limitBW_speedup.png)
+
+### Discussion
+From the non-limited bandwidth analysis we gain that the system-aware prefetcher can perform at the same level as the non-system-aware prefetcher. This is an important sanity check to confirm that the system awareness can provide the same optimal performance under optimal conditions. From analysing the limited bandwidth data we understand that the system awareness comes at a cost. We clearly see that for some specific traces we loose a lot of performance due to the system-awareness.
 
 ## Task 4
+In the fourth task we were asked to implement our own prefetcher design. I have opted for a delta correlation prefetcher as it is the natural extension of the stride prefetcher. The basic logic behind a delta correlation prefetcher is to store the deltas, i.e. differences between memory accesses. Over time the prefetcher builds a table associating consecutive deltas. This allows the prefetcher to predict the next delta by computing the last delta and looking in the table which delta is most likely to follow.
+
+### Implementation
+The delta correlation prefetcher builds on the foundations of the GHB-stride prefetcher. We use the same GHB and IT structs to store the past memory accesses. To this we add a delta-correlation-table(DCT) which stores the different deltas.
+```
+// delta correlation table entry struct
+typedef struct {
+	int64_t delta;
+	int64_t next_deltas[DCT_NUM_CANDIDATES]; // array of possible following deltas
+	uint8_t counters[DCT_NUM_CANDIDATES]; // occurence of following deltas
+} dct_entry_t;
+```
+The prefetcher walks the IT and GHB in the same fassion as in the GHB-stride prefetcher. The prefetcher also computes the last two strides, I refer to them as `delta1` and `delta2` here to avoid confusion, by taking the difference of past cache block addresses. The prefetcher probes the DCT entry of `delta2` with `delta1`. If the entry is already aware of `delta1` then the prefetcher increases the respective counter. If not then the position with the lowest counter is evicted and replaced with `delta1`.
+
+Next the prefetcher tries to predict the future memory access. For this he again starts form the known 
 
 ## Bonus Task
