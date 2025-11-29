@@ -30,13 +30,14 @@ traces = [
 ]
 out_path = "out/" # this is not relative to the host_path but relative to the script location
 csv_path = "csv/" # this is not relative to the host_path but relative to the script location
-csv_file = "task5_pythia_fullBW.csv"
+csv_file = "task4_delta_correlation_patched_limitBW.csv"
 warmup_instr = int(1e7) # should be 1e7
 sim_instr = int(5e7) # should be 5e7
 config_core = "1C"
 # config_bandwidth = "fullBW"
-config_bandwidth = "fullBW"
-config_prefetcher = "pythia"
+config_bandwidth = "limitBW"
+# config_prefetcher = "pythia"
+config_prefetcher = "delta_correlation"
 # config_prefetcher = "no"
 
 # global ui state
