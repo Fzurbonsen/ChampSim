@@ -202,11 +202,11 @@ uint16_t delta_correlation::prefetch_history(it_entry_t& it_entry,
   // generate the dct entry
   dct_entry_t& dct_entry = dct[(delta2 + DCT_SIZE/2) & DCT_MAX_ADDR];
 
-  check_dct(delta1, dct_entry, true);
+  // check_dct(delta1, dct_entry, true);
 
-  // // check if the delta is in the DCT
-  // if (!check_dct(delta1, dct_entry, true))
-  //   return ghb_ptr;
+  // check if the delta is in the DCT
+  if (!check_dct(delta1, dct_entry, true))
+    return ghb_ptr;
 
   int64_t prefetch_block_addr = gm_addr;
 
