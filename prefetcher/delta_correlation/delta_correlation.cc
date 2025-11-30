@@ -60,6 +60,7 @@ void delta_correlation::prefetcher_initialize()
     for (uint8_t& counter : entry.counters) {
       counter = 0;
     }
+    entry.sorted = true;
   }
 
   // zero the IT
@@ -85,8 +86,10 @@ int delta_correlation::check_dct(int64_t delta, dct_entry_t& dct_entry, bool upd
   // iterate over all candidates to check if the delta is alreay there
   for (uint16_t i = 0; i < DCT_NUM_CANDIDATES; ++i) {
     if (delta == dct_entry.next_deltas[i]) {
-      if (update)
+      if (update) {
         dct_entry.counters[i] = dct_entry.counters[i] < 255 ? dct_entry.counters[i] + 1 : dct_entry.counters[i];
+        dct_entry.sorted = false;
+      }
       return 1;
     }
     min_counter_idx = dct_entry.counters[i] <= dct_entry.counters[min_counter_idx] ? i : min_counter_idx;
@@ -96,6 +99,7 @@ int delta_correlation::check_dct(int64_t delta, dct_entry_t& dct_entry, bool upd
   if (update) {
     dct_entry.counters[min_counter_idx] = 1;
     dct_entry.next_deltas[min_counter_idx] = delta;
+    dct_entry.sorted = false;
   }
   return 0;
 }
@@ -113,6 +117,29 @@ int64_t delta_correlation::predict_delta(dct_entry_t& dct_entry)
 
   // return the most common delta
   return dct_entry.next_deltas[max_counter_idx];
+}
+
+
+// method to sort the dct_entry candidates by likelyhood
+void delta_correlation::sort_predictions(dct_entry_t& dct_entry)
+{
+  if (dct_entry.sorted)
+    return;
+
+  // as the array is never big we can use insertion sort
+  for (size_t i = 1; i < DCT_NUM_CANDIDATES; ++i) {
+    uint8_t key = dct_entry.counters[i];
+    int64_t delta = dct_entry.next_deltas[i];
+    size_t j = i;
+    while(j > 0 && dct_entry.counters[j - 1] > key) {
+      dct_entry.counters[j] = dct_entry.counters[j - 1];
+      dct_entry.next_deltas[j] = dct_entry.next_deltas[j - 1];
+      --j;
+    }
+    dct_entry.counters[j] = key;
+    dct_entry.next_deltas[j] = delta;
+  }
+  dct_entry.sorted = true;
 }
 
 
@@ -211,6 +238,7 @@ uint16_t delta_correlation::prefetch_history(it_entry_t& it_entry,
   // loop to prefetch multiple deltas
   for (int16_t i = 0; i < prefetch_distance+1; ++i) {
     // calculate the most likely next delta
+    sort_predictions(dct_entry);
     int64_t predicted_delta = predict_delta(dct_entry);
     prefetch_block_addr += predicted_delta;
 

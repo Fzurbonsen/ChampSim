@@ -74,6 +74,7 @@ typedef struct {
 	int64_t delta;
 	int64_t next_deltas[DCT_NUM_CANDIDATES];
 	uint8_t counters[DCT_NUM_CANDIDATES];
+	bool sorted;
 } dct_entry_t;
 
 // index table entry struct
@@ -133,6 +134,7 @@ private:
 	void print_it();
 	int check_dct(int64_t delta, dct_entry_t& dct_entry, bool update);
 	int64_t predict_delta(dct_entry_t& dct_entry);
+	void sort_predictions(dct_entry_t& dct_entry);
 	int check_ghb_pointer(uint16_t ptr, uint16_t tag);
 	uint16_t sanitize_pointer(uint16_t ptr, uint16_t tag);
 
