@@ -204,10 +204,6 @@ uint16_t delta_correlation::prefetch_history(it_entry_t& it_entry,
 
   check_dct(delta1, dct_entry, true);
 
-  // // check if the delta is in the DCT
-  // if (!check_dct(delta1, dct_entry, true))
-  //   return ghb_ptr;
-
   int64_t prefetch_block_addr = gm_addr;
 
   dct_entry = dct[(delta1 + DCT_SIZE/2) & DCT_MAX_ADDR];
