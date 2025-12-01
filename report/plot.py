@@ -220,13 +220,13 @@ def speedup3_bar_plot(df_data1, df_data2, df_data3, df_base, file=None):
 
     # Colors: gradient for normal bars, distinct gray for GeoMean
     gradient1 = np.linspace(0.5, 1.0, len(speedup1)-1)
-    colors1 = np.vstack([plt.cm.Oranges(gradient1), np.array([[0.5,0.5,0.5,1]])])  # GeoMean gray
+    colors1 = np.vstack([plt.cm.Purples(gradient1), np.array([[0.5,0.5,0.5,1]])])  # GeoMean gray
 
     gradient2 = np.linspace(0.5, 1.0, len(speedup2)-1)
     colors2 = np.vstack([plt.cm.Greens(gradient2), np.array([[0.3,0.3,0.3,1]])])  # GeoMean gray
 
     gradient3 = np.linspace(0.5, 1.0, len(speedup3)-1)
-    colors3 = np.vstack([plt.cm.Blues(gradient3), np.array([[0.2,0.2,0.2,1]])])  # GeoMean gray
+    colors3 = np.vstack([plt.cm.Oranges(gradient3), np.array([[0.2,0.2,0.2,1]])])  # GeoMean gray
 
     # Plot bars
     bars1 = plt.bar(x - width, speedup1.values, width, color=colors1)

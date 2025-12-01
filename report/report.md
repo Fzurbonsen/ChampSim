@@ -1,6 +1,6 @@
 # Report Lab 4
 ## Introduction
-In the fourth installment of the computer architecture lab we are asked to implement a set of prefetchers in the ChampSim simulator environment.
+In the fourth installment of the computer architecture lab we are asked to implement a set of prefetchers in the ChampSim simulator environment. We are then asked to evaluate their performance in a system with a wide memory bandwidth and a limited memory bandwidth. We further then compare these different implementations to understand the different tradeoffs and effects that choices in the implementation have on the overall performance of the system. In a last step we compare the implemented prefetchers to the stat-of-the-art pythia prefetcher.
 
 ## Warmup
 In the warmup we are asked to run the baseline CPU simulation without a prefetcher attatched. In Figure 1 we can see the IPC plot for the baseline configuration. It is easy to see that there are significant differences between the applications performance. We can clearly see that charlie_0 has the highest ICU and is therefore the most performant or fastest trace, while bc-12 and bfs-14 are the least performant or the slowest. The bc-0 trace is also not far off from bc-12 and bfs-14. Further we observe that the traces from the GAP dataset are a lot slower than the traces from the charlie dataset.
@@ -98,7 +98,7 @@ From the non-limited bandwidth analysis we gain that the system-aware prefetcher
 ## Task 4
 In the fourth task we were asked to implement our own prefetcher design. I have opted for a delta correlation prefetcher as it is the natural extension of the stride prefetcher. The basic logic behind a delta correlation prefetcher is to store the deltas, i.e. differences between memory accesses. Over time the prefetcher builds a table associating consecutive deltas. This allows the prefetcher to predict the next delta by computing the last delta and looking in the table which delta is most likely to follow. This design is based on the desing presented in the paper by Grannaes et. al.[^2]
 
-[^2]: Grannaes, M., Jahre, M., & Natvig, L. (2011). Storage efficient hardware prefetching using Delta-Correlating Prediction Tables. Journal of Instruction-Level Parallelism, 13, 1–16.
+[^2]: Marius Grannaes, Magnus Jahre, and Lars Natvig. Storage efficient hardware prefetching using Delta-Correlating Prediction Tables. In Journal of Instruction-Level Parallelism, 2011.
 
 ### Implementation
 The delta correlation prefetcher builds on the foundations of the GHB-stride prefetcher. We use the same GHB and IT structs to store the past memory accesses. To this we add a delta-correlation-table(DCT) which stores the different deltas.
@@ -114,6 +114,37 @@ The prefetcher walks the IT and GHB in the same fassion as in the GHB-stride pre
 
 Next the prefetcher tries to predict the future memory access. For this he starts form the known `delta1` and probes its DCT entry for the most likely follow-up delta. It prefetches the cache block address at `current_address + delta`. It then proceeds from the predicted delta and tries to predict further by probing the DCT entry at the location of the predicted delta. The prefetcher repeats this for the same prefetch degree as the stride prefetcher. Allowing it to be system-aware with the same logic.
 
+The prefetcher is based on a set of heuristically determined parameters. The size of the DCT was chosen to be 256 to match the IT and GHB. Each DCT entry holds 4 candidate deltas. The index of the DCT is determined as `(prev_delta + DCT_SIZE/2) & DCT_MAX_ADDR` to avoid mapping deltas with only a sign flip to the same entry.
+
+A further heuristic that is applied is that before prefetching it is checked whether the `delta1` is already known to the entry corresponding to `delta2`. If yes then we prefetch memory and if not then we do not. The idea behind this heuristic is that if the current `delta1` is predicted by `delta2` the chance of being in a predictable pattern is very high. This small distinction has significant impact on the prefetchers performance.
+
 ### Results
+Figure 6 shows the speedup of the delta correlation prefetcher as well as the speedup of the system-aware stride prefetcher relative to the system with no prefetcher at full bandwidth. We can observe clear performance improvement for trace bfs-10 and marginal performance improvements for traces cc-13, cc-14, cc-5, ssp-10, and ssp-14. For traces bc-0 and all charlie traces we see no or minimal performance change and for traces bc-12 and bfs-14 we see clear performance degradation. It is also imporant to note that for the bc-12 trace the speedup is below 1 indicating that the system with the prefetcher performs worse than without. We see a marginal perfromance improvement in the geometric mean.
+
+![Figure 6](img/task4_delta_correlation_ghb_stride_sys_aware_fullBW_speedup.png)
+
+Figure 7 shows the speedup of the delta correlation prefetcher as well as the speedup of the system-aware stride prefetcher relative to the system with no prefetcher at limited bandwidth. We can see clear performance improvements for the traces bfs-10 and bfs-14 as well as marginal performance improvements for cc-13, cc-14, cc-5, sssp-10, and sssp-14. For bc-0 and all charlie traces we see only small or no performanc e difference between the stride and the delta correlation prefetcher. For the trace bc-12 we still see clear performance degradation but now the delta correlation prefetcher has a speedup of 1 indicating that it matches the performance of the baseline system. We see a clear perfromance improvement in the geometric mean.
+
+![Figure 7](img/task4_delta_correlation_ghb_stride_sys_aware_limitBW_speedup.png)
+
+### Discussion
+From the data it can clearly be seen that the delta correlation prefetcher performs a lot better in the bandwidth limited system then in the unlimited system. This implies that while it cannot provide a strong peak performance it seems to be very efficient at alocating limited resources. We can also see that there is a very heavy trace dependence in the performance. For certain traces the delta correlation prefetcher clearly outperforms the stride prefetcher, while for others it does not manage to meet the baseline performance. While for some traces the relative performance is consistent between limited and full memory bandwidth for other traces this is not the case. This can be due to the inherent predictability of a trace or specific data patterns used. It could also be that some of these swings could be tuned by changing the ad hoc decided parameterisation of the delta correlation prefetcher. A conclusive reason of these performance swings cannot be given in this discussion as it warants further investigation which would exceed the scope of this lab.
 
 ## Bonus Task
+In the bonus task we are asked to compare our prefetcher to the state-of-the-art pythia prefetcher.[^3]
+
+### Results
+Figure 8 shows the pythia prefetcher compared to both the system-aware stride prefetcher and delta correlation prefetcher relative to the full bandwidth baseline. Pythia performs best on the traces bfs-10 and bfs-14 and performs worst on the traces bc-0 and bc-12. We can also see that pythia provides significant speedup over the baseline for the charlie traces. For the traces cc-13, cc-14, cc-5, sssp-10, and sssp-14 the performance of the three prefetchers is very similar with the delta correlation prefetcher leading in all traces and both pythia and the stride prefetcher in second for some of the traces. We can see that pythia clearly outperforms both the system aware prefetcher and the delta correlation prefetcher in the geometric mean.
+
+![Figure 8](img/task5_delta_correlation_pythia_ghb_stride_sys_aware_fullBW_speedup.png)
+
+Figure 9 shows the pythia prefetcher compared to both the system-aware stride prefetcher and delta correlation prefetcher relative to the limited bandwidth baseline. Pythia still wastly outperforms the other prefetchers in the bfs-10 and bfs-14 traces as well as in the charlie traces. But it shows clear performance degradation in the bc-0 and bc-12 traces where it does not even match the baseline indicated by a speedup below 1. In the traces cc-13, cc-14, cc-5, sssp-10, and sssp-14 it is outperformed by both the stride prefetcher and the delta correlation prefetcher. The geometric mean performance of pythia is now almost equal to that of the delta correlation prefetcher which both outperform the stride prefetcher.
+
+![Figure 9](img/task5_delta_correlation_pythia_ghb_stride_sys_aware_limitBW_speedup.png)
+
+### Discussion
+Pythia shows over all remarkable performance in the full bandwidth system. And also shows remarkable performance for the bfs traces in the limited bandwidth system. It is also very interesting that pythia is the only prefetcher shown here that achieves a significant speedup for the charlie dataset. From the data we can also conclude that pythia suffers heavily under a memory bandwidth limitation. It is very interesting that the relatively simple delta correlation prefetcher implemented in the scope of this lab almost matche the performance of pythia for the limited bandwidth system.
+
+[^3]: Rahul Bera, Konstantinos Kanellopoulos, Anant V. Nori, Taha Shahroodi, Sreenivas Subramoney, and
+Onur Mutlu. Pythia: A Customizable Hardware Prefetching Framework Using Online Reinforcement
+Learning. In MICRO, 2021.
