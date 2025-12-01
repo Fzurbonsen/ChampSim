@@ -1,0 +1,16 @@
+---
+geometry:
+  - margin=0.75in
+  - letterpaper
+papersize: a4
+author: "Frederic zur Bonsen (fzurbonsen@ethz.ch)"
+date: "11.2025"
+header-includes: |
+  \usepackage{fancyhdr}
+  \usepackage{lastpage}
+  \pagestyle{fancy}
+  \fancyhead[L]{Frederic zur Bonsen (fzurbonsen@ethz.ch)}
+  \fancyhead[C]{}
+  \fancyhead[R]{\thepage/\pageref{LastPage}}
+  \fancyfoot[C]{}
+---

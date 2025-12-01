@@ -5,7 +5,9 @@ In the fourth installment of the computer architecture lab we are asked to imple
 ## Warmup
 In the warmup we are asked to run the baseline CPU simulation without a prefetcher attatched. In Figure 1 we can see the IPC plot for the baseline configuration. It is easy to see that there are significant differences between the applications performance. We can clearly see that charlie_0 has the highest ICU and is therefore the most performant or fastest trace, while bc-12 and bfs-14 are the least performant or the slowest. The bc-0 trace is also not far off from bc-12 and bfs-14. Further we observe that the traces from the GAP dataset are a lot slower than the traces from the charlie dataset.
 
-![Figure 1](img/task0_no_pref_fullBW_ipc.png)
+![No prefetcher ICU performance.](img/task0_no_pref_fullBW_ipc.png)
+
+\newpage
 
 ## Task 1
 In the first task we are asked to implement a basic global-history-buffer-based stride prefetcher. A description of the algorithm is given in the paper by Kyle et. al.[^1]
@@ -36,16 +38,17 @@ For this first implementation many values were hardcoded to show the advantage o
 ### Results
 In Figure 2 we see the speedup for the implemented GHB-stride prefetcher relative to the baseline evaluated in the Warmup step of the lab. Charlie_2 and charlie_3 show the smallest speedup with 1.01 but in general it can be observed that the traces from the charlie dataset show barely any performance difference. On the other hand we see very clear improvements for the traces in the GAP dataset. The biggest speedup is seen in bfs-14 which is the trace with the worst baseline ICU. Observe also, that no traces shows a speedup below 1. So adding a prefetcher in this system configuration shows a strict performance increase.
 
-![Figure 2](img/task1_ghb_stride_fullBW_speedup.png)
+![GHB-stride prefetcher speedup at full bandwidth.](img/task1_ghb_stride_fullBW_speedup.png)
 
 [^1]: Kyle J. Nesbit and James E. Smith. Data cache prefetching using a global history buffer. In HPCA, 2004
 
 ## Task 2
 In the second task we are asked to evalueate the GHB-stride prefetcher in a system with limited memory bandwidth.
+
 ### Results
 In Figure 3 we can see the speedup of the GHB-stride prefetcher relative to the baseline without a prefetcher, both run in a system with a limited memory bandwidth. We can make a few important observations. We can directly see that the geometric mean of the speedup has decreased indicating that the GHB-stride prefetcher does not only perform worse in absolute numbers with a limited bandwidth but also its relative performance to the baseline decreases. The biggest performance difference can be seen in the traces sssp-10 and ssp-14, with -0.11 and -0.09 respectively. The smallest performance loss can be observed with charlie_1 and charlie_2 which show a difference of -0.01. In general the traces from the charlie dataset show a smaller performance loss than those from the GAP dataset. But for the trace charlie_3 we see a speedup of 0.99, meaning that it runs slower with the prefetcher than without.
 
-![Figure 3](img/task2_ghb_stride_limitBW_speedup.png)
+![GHB-stride prefetcher speedup at limited bandwidth.](img/task2_ghb_stride_limitBW_speedup.png)
 
 ### Discussion
 In the data we see a performance loss in every trace. This stems from the implementation of the prefetcher. The prefetcher is not aware of the system and therefore does not know how much memory bandwidth is still free. In the implementation we hardcoded the prefetch degree meaning that the prefetcher will always prefetch the next 6 memory addresses. If the memory bus is close to or already at capacity this becomes an issue as it in the best case slows down the prefetching and in the worst case slows down the entire CPU as other memory, that is needed, cannot be fetched due to the bus being clogged by prefetcher requests.
@@ -86,11 +89,11 @@ int16_t ghb_stride_sys_aware::calculate_prefetch_distance(float accuracy, uint8_
 ### Results
 Figure 4 shows the speedup of the system-aware GHB-stride prefetcher with full bandwidth relative to the system with no prefetcher at full bandwidth. If we compare this with Figure 2 from Task 1 we see no difference in performance. This makes sense as we initialized our system-aware prefetcher at the hardcoded values for the non-system-aware prefetcher. If the prefetcher is never limited by the memory bandwidth then he will perform the same as the non-system-aware prefetcher.
 
-![Figure 4](img/task3_ghb_stride_sys_aware_fullBW_speedup.png)
+![System-aware GHB-stride prefetcher speedup at full bandwidth.](img/task3_ghb_stride_sys_aware_fullBW_speedup.png)
 
 Figure 5 shows the speedup of the system aware GHB-stride prefetcher with limited bandwidth relative to the system with no prefetcher at limited bandwidth. We see that the geometric mean is higher for the system-aware prefetcher. We see higher or equal speedup for all traces except for bfs-10 and bfs-14 where the speedup reduces by 0.03 and 0.1 respectively.
 
-![Figure 5](img/task3_ghb_stride_sys_aware_limitBW_speedup.png)
+![System-aware GHB-stride prefetcher speedup at limited bandwidth.](img/task3_ghb_stride_sys_aware_limitBW_speedup.png)
 
 ### Discussion
 From the non-limited bandwidth analysis we gain that the system-aware prefetcher can perform at the same level as the non-system-aware prefetcher. This is an important sanity check to confirm that the system awareness can provide the same optimal performance under optimal conditions. From analysing the limited bandwidth data we understand that the system awareness comes at a cost. We clearly see that for some specific traces we loose a lot of performance due to the system-awareness.
@@ -121,11 +124,11 @@ A further heuristic that is applied is that before prefetching it is checked whe
 ### Results
 Figure 6 shows the speedup of the delta correlation prefetcher as well as the speedup of the system-aware stride prefetcher relative to the system with no prefetcher at full bandwidth. We can observe clear performance improvement for trace bfs-10 and marginal performance improvements for traces cc-13, cc-14, cc-5, ssp-10, and ssp-14. For traces bc-0 and all charlie traces we see no or minimal performance change and for traces bc-12 and bfs-14 we see clear performance degradation. It is also imporant to note that for the bc-12 trace the speedup is below 1 indicating that the system with the prefetcher performs worse than without. We see a marginal perfromance improvement in the geometric mean.
 
-![Figure 6](img/task4_delta_correlation_ghb_stride_sys_aware_fullBW_speedup.png)
+![Delta correlation prefetcher and system-aware GHB-stride prefetcher speedup at full bandwidth.](img/task4_delta_correlation_ghb_stride_sys_aware_fullBW_speedup.png)
 
 Figure 7 shows the speedup of the delta correlation prefetcher as well as the speedup of the system-aware stride prefetcher relative to the system with no prefetcher at limited bandwidth. We can see clear performance improvements for the traces bfs-10 and bfs-14 as well as marginal performance improvements for cc-13, cc-14, cc-5, sssp-10, and sssp-14. For bc-0 and all charlie traces we see only small or no performanc e difference between the stride and the delta correlation prefetcher. For the trace bc-12 we still see clear performance degradation but now the delta correlation prefetcher has a speedup of 1 indicating that it matches the performance of the baseline system. We see a clear perfromance improvement in the geometric mean.
 
-![Figure 7](img/task4_delta_correlation_ghb_stride_sys_aware_limitBW_speedup.png)
+![Delta correlation prefetcher and system-aware GHB-stride prefetcher speedup at limited bandwidth.](img/task4_delta_correlation_ghb_stride_sys_aware_limitBW_speedup.png)
 
 ### Discussion
 From the data it can clearly be seen that the delta correlation prefetcher performs a lot better in the bandwidth limited system then in the unlimited system. This implies that while it cannot provide a strong peak performance it seems to be very efficient at alocating limited resources. We can also see that there is a very heavy trace dependence in the performance. For certain traces the delta correlation prefetcher clearly outperforms the stride prefetcher, while for others it does not manage to meet the baseline performance. While for some traces the relative performance is consistent between limited and full memory bandwidth for other traces this is not the case. This can be due to the inherent predictability of a trace or specific data patterns used. It could also be that some of these swings could be tuned by changing the ad hoc decided parameterisation of the delta correlation prefetcher. A conclusive reason of these performance swings cannot be given in this discussion as it warants further investigation which would exceed the scope of this lab.
@@ -136,11 +139,11 @@ In the bonus task we are asked to compare our prefetcher to the state-of-the-art
 ### Results
 Figure 8 shows the pythia prefetcher compared to both the system-aware stride prefetcher and delta correlation prefetcher relative to the full bandwidth baseline. Pythia performs best on the traces bfs-10 and bfs-14 and performs worst on the traces bc-0 and bc-12. We can also see that pythia provides significant speedup over the baseline for the charlie traces. For the traces cc-13, cc-14, cc-5, sssp-10, and sssp-14 the performance of the three prefetchers is very similar with the delta correlation prefetcher leading in all traces and both pythia and the stride prefetcher in second for some of the traces. We can see that pythia clearly outperforms both the system aware prefetcher and the delta correlation prefetcher in the geometric mean.
 
-![Figure 8](img/task5_delta_correlation_pythia_ghb_stride_sys_aware_fullBW_speedup.png)
+![Delta correlation prefetcher, pythia prefetcher, and system-aware GHB-stride prefetcher speedup at full bandwidth.](img/task5_delta_correlation_pythia_ghb_stride_sys_aware_fullBW_speedup.png)
 
 Figure 9 shows the pythia prefetcher compared to both the system-aware stride prefetcher and delta correlation prefetcher relative to the limited bandwidth baseline. Pythia still wastly outperforms the other prefetchers in the bfs-10 and bfs-14 traces as well as in the charlie traces. But it shows clear performance degradation in the bc-0 and bc-12 traces where it does not even match the baseline indicated by a speedup below 1. In the traces cc-13, cc-14, cc-5, sssp-10, and sssp-14 it is outperformed by both the stride prefetcher and the delta correlation prefetcher. The geometric mean performance of pythia is now almost equal to that of the delta correlation prefetcher which both outperform the stride prefetcher.
 
-![Figure 9](img/task5_delta_correlation_pythia_ghb_stride_sys_aware_limitBW_speedup.png)
+![Delta correlation prefetcher, pythia prefetcher, and system-aware GHB-stride prefetcher speedup at limited bandwidth.](img/task5_delta_correlation_pythia_ghb_stride_sys_aware_limitBW_speedup.png)
 
 ### Discussion
 Pythia shows over all remarkable performance in the full bandwidth system. And also shows remarkable performance for the bfs traces in the limited bandwidth system. It is also very interesting that pythia is the only prefetcher shown here that achieves a significant speedup for the charlie dataset. From the data we can also conclude that pythia suffers heavily under a memory bandwidth limitation. It is very interesting that the relatively simple delta correlation prefetcher implemented in the scope of this lab almost matche the performance of pythia for the limited bandwidth system.
